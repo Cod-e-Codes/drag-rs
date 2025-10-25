@@ -278,10 +278,10 @@ impl RaceState {
                         let reaction = green_time.elapsed().as_secs_f64();
                         self.player.reaction_time = Some(reaction);
                         self.race_started = true;
-                        
+
                         // Transition to Racing state
                         self.christmas_tree.state = LightState::Racing;
-                        
+
                         // Start the AI opponent
                         self.ai.start_race(&mut self.opponent);
                     }
@@ -292,7 +292,7 @@ impl RaceState {
                     self.race_started = true;
                     self.race_finished = true;
                     self.winner = Some(Winner::Opponent);
-                    
+
                     // Transition to Racing state to show red light
                     self.christmas_tree.state = LightState::Racing;
                     return;

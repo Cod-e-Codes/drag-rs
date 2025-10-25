@@ -8,10 +8,12 @@ use std::io;
 use std::time::{Duration, Instant};
 
 mod app;
+mod audio;
 mod game;
 mod ui;
 
 use app::{App, AppState};
+use audio::{AudioEngine, BeepType};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Setup terminal
@@ -21,10 +23,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
+    // Initialize audio engine
+    let audio = match AudioEngine::new() {
+        Ok(engine) => Some(engine),
+        Err(_e) => None, // Silently fail if audio can't be initialized
+    };
+
     // Create app
     let mut app = App::new();
     let mut last_tick = Instant::now();
     let tick_rate = Duration::from_millis(16); // ~60 FPS
+    let mut last_light_state = game::LightState::PreStage;
 
     // Run app
     loop {
@@ -42,13 +51,68 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         if last_tick.elapsed() >= tick_rate {
-            app.update(last_tick.elapsed().as_secs_f64());
+            let delta = last_tick.elapsed().as_secs_f64();
+            app.update(delta);
+
+            // Update audio
+            if let Some(ref audio_engine) = audio {
+                // Update beep timer
+                audio_engine.update_beeps(delta as f32);
+
+                match app.state {
+                    AppState::Racing => {
+                        if let Some(race) = &app.race_state {
+                            // Play beeps for Christmas tree state changes
+                            if race.christmas_tree.state != last_light_state {
+                                match race.christmas_tree.state {
+                                    game::LightState::Yellow1
+                                    | game::LightState::Yellow2
+                                    | game::LightState::Yellow3 => {
+                                        audio_engine.play_beep(BeepType::Yellow);
+                                    }
+                                    game::LightState::Green => {
+                                        audio_engine.play_beep(BeepType::Green);
+                                    }
+                                    game::LightState::Racing => {
+                                        // Check for red light
+                                        if let Some(rt) = race.player.reaction_time
+                                            && rt < 0.0
+                                        {
+                                            audio_engine.play_beep(BeepType::RedLight);
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                                last_light_state = race.christmas_tree.state;
+                            }
+
+                            // Update engine sound based on player RPM
+                            audio_engine.update_engine(
+                                race.player.rpm,
+                                race.player.throttle as f32,
+                                app.player_car.redline,
+                            );
+                        }
+                    }
+                    AppState::Menu | AppState::Results => {
+                        // Silence in menu and results
+                        audio_engine.stop();
+                        last_light_state = game::LightState::PreStage;
+                    }
+                }
+            }
+
             last_tick = Instant::now();
         }
 
         if app.should_quit {
             break;
         }
+    }
+
+    // Stop audio before exiting
+    if let Some(audio_engine) = audio {
+        audio_engine.stop();
     }
 
     // Restore terminal
@@ -83,12 +147,12 @@ fn handle_input(app: &mut App, key: KeyEvent) -> bool {
         },
         AppState::Results => match (key.code, key.kind) {
             (KeyCode::Char('r'), KeyEventKind::Press) => app.start_race(),
-            (KeyCode::Char('q'), KeyEventKind::Press) => return true, // Quit app
+            (KeyCode::Char('q'), KeyEventKind::Press) => return true,
             (KeyCode::Esc, KeyEventKind::Press) => {
                 app.reset_all_key_states();
                 app.state = AppState::Menu;
-            },
-            _ => {} // Ignore all other events including key releases
+            }
+            _ => {}
         },
     }
     false

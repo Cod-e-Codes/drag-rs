@@ -245,7 +245,11 @@ fn draw_track(f: &mut Frame, area: Rect, race: &crate::game::RaceState) {
             "Opponent: {:.1} m/s | ET: {:.3}s{}",
             race.opponent.velocity,
             race.opponent.reaction_time.unwrap_or(0.0) + race.elapsed_time,
-            if race.opponent.finish_time.is_some() { " ✅" } else { "" }
+            if race.opponent.finish_time.is_some() {
+                " ✅"
+            } else {
+                ""
+            }
         )),
         Line::from(opponent_spans),
         Line::from(""),
@@ -253,7 +257,11 @@ fn draw_track(f: &mut Frame, area: Rect, race: &crate::game::RaceState) {
             "Player: {:.1} m/s | ET: {:.3}s{}",
             race.player.velocity,
             race.player.reaction_time.unwrap_or(0.0) + race.elapsed_time,
-            if race.player.finish_time.is_some() { " ✅" } else { "" }
+            if race.player.finish_time.is_some() {
+                " ✅"
+            } else {
+                ""
+            }
         )),
         Line::from(player_spans),
         Line::from(""),
@@ -288,7 +296,7 @@ fn draw_track(f: &mut Frame, area: Rect, race: &crate::game::RaceState) {
 fn create_colored_track_line(line: &str, car_color: Color) -> Vec<Span<'_>> {
     let mut spans = Vec::new();
     let mut current_span = String::new();
-    
+
     for ch in line.chars() {
         if ch == '▶' {
             // Add the current span if it's not empty
@@ -302,12 +310,12 @@ fn create_colored_track_line(line: &str, car_color: Color) -> Vec<Span<'_>> {
             current_span.push(ch);
         }
     }
-    
+
     // Add any remaining text
     if !current_span.is_empty() {
         spans.push(Span::raw(current_span));
     }
-    
+
     spans
 }
 
