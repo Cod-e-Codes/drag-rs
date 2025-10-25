@@ -45,8 +45,18 @@ fn draw_menu(f: &mut Frame, app: &App) {
             app.player_car.horsepower, app.player_car.weight, app.player_car.redline
         )),
         Line::from(""),
+        Line::from(format!(
+            "Audio: {}",
+            if app.audio_muted {
+                Span::styled("MUTED", Style::default().fg(Color::Red))
+            } else {
+                Span::styled("ON", Style::default().fg(Color::Green))
+            }
+        )),
+        Line::from(""),
         Line::from("[←/→] Select Car"),
         Line::from("[1] Quick Race"),
+        Line::from("[M] Toggle Audio"),
         Line::from("[Q] Quit"),
     ];
 
@@ -85,11 +95,10 @@ fn draw_race(f: &mut Frame, race: &crate::game::RaceState) {
     draw_gauges(f, chunks[3], race);
 
     // Controls
-    let controls = Paragraph::new(
-        "[SPACE] Throttle (Hold/Release) | [↑/W] Shift | [N] Nitrous (Hold/Release) | [ESC] Menu",
-    )
-    .alignment(Alignment::Center)
-    .block(Block::default().borders(Borders::ALL));
+    let controls =
+        Paragraph::new("[SPACE] Throttle | [↑/W] Shift | [N] Nitrous | [M] Mute | [ESC] Menu")
+            .alignment(Alignment::Center)
+            .block(Block::default().borders(Borders::ALL));
     f.render_widget(controls, chunks[4]);
 }
 
@@ -458,6 +467,7 @@ fn draw_results(f: &mut Frame, race: &crate::game::RaceState) {
         Line::from("═══════════════════════════════"),
         Line::from(""),
         Line::from("[R] Race Again"),
+        Line::from("[M] Toggle Audio"),
         Line::from("[Q] Quit to Menu"),
     ];
 

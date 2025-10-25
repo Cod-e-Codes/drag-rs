@@ -15,6 +15,7 @@ pub struct App {
     pub should_quit: bool,
     pub selected_car_index: usize,
     pub key_states: KeyStates,
+    pub audio_muted: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -38,6 +39,7 @@ impl App {
                 nitrous_pressed: false,
                 shift_pressed: false,
             },
+            audio_muted: false,
         }
     }
 
@@ -120,5 +122,9 @@ impl App {
         self.key_states.throttle_pressed = false;
         self.key_states.nitrous_pressed = false;
         self.key_states.shift_pressed = false;
+    }
+
+    pub fn toggle_mute(&mut self) {
+        self.audio_muted = !self.audio_muted;
     }
 }
