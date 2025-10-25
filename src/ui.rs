@@ -19,7 +19,7 @@ pub fn draw(f: &mut Frame, app: &App) {
         }
         AppState::Results => {
             if let Some(race) = &app.race_state {
-                draw_results(f, race);
+                draw_results(f, race, app);
             }
         }
     }
@@ -417,7 +417,7 @@ fn draw_gauges(f: &mut Frame, area: Rect, race: &crate::game::RaceState) {
     f.render_widget(stats, gauge_chunks[3]);
 }
 
-fn draw_results(f: &mut Frame, race: &crate::game::RaceState) {
+fn draw_results(f: &mut Frame, race: &crate::game::RaceState, app: &App) {
     let area = f.area();
 
     let (winner_text, winner_color) = if let Some(rt) = race.player.reaction_time {
@@ -463,6 +463,15 @@ fn draw_results(f: &mut Frame, race: &crate::game::RaceState) {
         Line::from(format!("Reaction Time:  {:.3}s", player_rt)),
         Line::from(format!("Top Speed:      {:.1} m/s", race.player.top_speed)),
         Line::from(format!("Perfect Shifts: {}", race.player.perfect_shifts)),
+        Line::from(""),
+        Line::from(format!(
+            "Audio: {}",
+            if app.audio_muted {
+                Span::styled("MUTED", Style::default().fg(Color::Red))
+            } else {
+                Span::styled("ON", Style::default().fg(Color::Green))
+            }
+        )),
         Line::from(""),
         Line::from("═══════════════════════════════"),
         Line::from(""),

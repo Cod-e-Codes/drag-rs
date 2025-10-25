@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     // Initialize audio engine
-    let audio = AudioEngine::new().ok(); // Silently fail if audio can't be initialized
+    let audio_engine = AudioEngine::new().ok(); // Silently fail if audio can't be initialized
 
     // Create app
     let mut app = App::new();
@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         if event::poll(timeout)?
             && let Event::Key(key) = event::read()?
-            && handle_input(&mut app, key)
+            && handle_input(&mut app, key, audio_engine.as_ref())
         {
             break;
         }
@@ -52,7 +52,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             app.update(delta);
 
             // Update audio
-            if let Some(ref audio_engine) = audio
+            if let Some(ref audio_engine) = audio_engine
                 && !app.audio_muted
             {
                 // Update beep timer
@@ -99,7 +99,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         last_light_state = game::LightState::PreStage;
                     }
                 }
-            } else if let Some(ref audio_engine) = audio {
+            } else if let Some(ref audio_engine) = audio_engine {
                 // Always silence when muted
                 audio_engine.stop();
             }
@@ -113,7 +113,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Stop audio before exiting
-    if let Some(audio_engine) = audio {
+    if let Some(audio_engine) = audio_engine {
         audio_engine.stop();
     }
 
@@ -125,14 +125,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn handle_input(app: &mut App, key: KeyEvent) -> bool {
+fn handle_input(app: &mut App, key: KeyEvent, audio_engine: Option<&audio::AudioEngine>) -> bool {
     match app.state {
         AppState::Menu => match (key.code, key.kind) {
             (KeyCode::Char('q') | KeyCode::Esc, KeyEventKind::Press) => return true,
             (KeyCode::Char('1'), KeyEventKind::Press) => app.start_race(),
             (KeyCode::Left, KeyEventKind::Press) => app.select_previous_car(),
             (KeyCode::Right, KeyEventKind::Press) => app.select_next_car(),
-            (KeyCode::Char('m'), KeyEventKind::Press) => app.toggle_mute(),
+            (KeyCode::Char('m'), KeyEventKind::Press) => app.toggle_mute(audio_engine),
             _ => {}
         },
         AppState::Racing => match (key.code, key.kind) {
@@ -142,7 +142,7 @@ fn handle_input(app: &mut App, key: KeyEvent) -> bool {
             (KeyCode::Up | KeyCode::Char('w'), KeyEventKind::Release) => app.reset_shift_state(),
             (KeyCode::Char('n'), KeyEventKind::Press) => app.set_nitrous_pressed(true),
             (KeyCode::Char('n'), KeyEventKind::Release) => app.set_nitrous_pressed(false),
-            (KeyCode::Char('m'), KeyEventKind::Press) => app.toggle_mute(),
+            (KeyCode::Char('m'), KeyEventKind::Press) => app.toggle_mute(audio_engine),
             (KeyCode::Esc, KeyEventKind::Press) => {
                 app.reset_all_key_states();
                 app.state = AppState::Menu;
@@ -152,7 +152,7 @@ fn handle_input(app: &mut App, key: KeyEvent) -> bool {
         AppState::Results => match (key.code, key.kind) {
             (KeyCode::Char('r'), KeyEventKind::Press) => app.start_race(),
             (KeyCode::Char('q'), KeyEventKind::Press) => return true,
-            (KeyCode::Char('m'), KeyEventKind::Press) => app.toggle_mute(),
+            (KeyCode::Char('m'), KeyEventKind::Press) => app.toggle_mute(audio_engine),
             (KeyCode::Esc, KeyEventKind::Press) => {
                 app.reset_all_key_states();
                 app.state = AppState::Menu;

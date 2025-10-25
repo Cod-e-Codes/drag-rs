@@ -124,7 +124,12 @@ impl App {
         self.key_states.shift_pressed = false;
     }
 
-    pub fn toggle_mute(&mut self) {
+    pub fn toggle_mute(&mut self, audio_engine: Option<&crate::audio::AudioEngine>) {
         self.audio_muted = !self.audio_muted;
+
+        // Reset audio state when toggling mute to prevent stuck audio
+        if let Some(audio) = audio_engine {
+            audio.reset();
+        }
     }
 }

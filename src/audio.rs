@@ -165,6 +165,17 @@ impl AudioEngine {
             state.beep_active = false;
         }
     }
+
+    /// Reset all audio state (useful when toggling mute)
+    pub fn reset(&self) {
+        if let Ok(mut state) = self.state.lock() {
+            state.engine_amplitude = 0.0;
+            state.engine_frequency = 0.0;
+            state.beep_active = false;
+            state.beep_timer = 0.0;
+            state.beep_frequency = 0.0;
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
