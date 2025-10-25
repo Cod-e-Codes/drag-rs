@@ -85,12 +85,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 last_light_state = race.christmas_tree.state;
                             }
 
-                            // Update engine sound based on player RPM
-                            audio_engine.update_engine(
-                                race.player.rpm,
-                                race.player.throttle as f32,
-                                app.player_car.redline,
-                            );
+                            // Update engine sound based on player RPM (only if player hasn't finished)
+                            if race.player.finish_time.is_none() {
+                                audio_engine.update_engine(
+                                    race.player.rpm,
+                                    race.player.throttle as f32,
+                                    app.player_car.redline,
+                                );
+                            } else {
+                                // Player has finished, stop engine sound
+                                audio_engine.stop();
+                            }
                         }
                     }
                     AppState::Menu | AppState::Results => {
