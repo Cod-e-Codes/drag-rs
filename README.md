@@ -2,6 +2,8 @@
 
 A high-octane terminal-based drag racing game built with Rust and Ratatui.
 
+<img src="drag-rs.gif" alt="drag-rs gameplay" width="600">
+
 ## Features
 
 - **Timing-based gameplay** - Perfect your reaction time and shifting
